@@ -1,6 +1,6 @@
 {
   "name": "cassandra-migration",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Cassandra migration utility as Node.js module/CLI-tool",
   "main": "index.js",
   "scripts": {

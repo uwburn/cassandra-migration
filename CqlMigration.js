@@ -16,7 +16,7 @@ module.exports = class CqlMigration extends BaseMigration {
   }
 
   async execute(cassandraClient) {
-    let cqlStatements = this.cql.split(/;[/r/n]+/);
+    let cqlStatements = this.cql.split(/;[\r\n]+/);
     for (let cs of cqlStatements)
       await this.executeStatement(cassandraClient, cs);
   }
