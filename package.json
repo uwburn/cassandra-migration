@@ -1,0 +1,33 @@
+{
+  "name": "cassandra-migration",
+  "version": "0.0.1",
+  "description": "Cassandra migration utility as Node.js module/CLI-tool",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uwburn/cassandra-migration.git"
+  },
+  "keywords": [
+    "cassandra",
+    "migration",
+    "cli",
+    "module"
+  ],
+  "author": "Michele Tibaldi <michele.tibaldi@holonix.it> (http://www.holonix.it)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/uwburn/cassandra-migration/issues"
+  },
+  "homepage": "https://github.com/uwburn/cassandra-migration#readme",
+  "dependencies": {
+    "checksum": "^0.1.1",
+    "debug": "^4.1.1"
+  },
+  "devDependencies": {
+    "cassandra-driver": "^4.1.0",
+    "eslint": "^6.0.1"
+  }
+}
