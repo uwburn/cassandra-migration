@@ -46,6 +46,12 @@ async function getAppliedMigrations(cassandraClient) {
   return (await cassandraClient.execute("SELECT * FROM migration_history")).rows;
 }
 
+function prettyName(name) {
+  let spaced = name.replace("_", " ");
+
+  return spaced[0].toUpperCase() + spaced.substring(1);
+}
+
 async function loadAvailableMigration(dir, filename) {
   let match = filename.match(/^([0-9]+)__([A-z0-9_]*)\.(js|cql)$/);
   if (match.index !== 0)
@@ -56,7 +62,7 @@ async function loadAvailableMigration(dir, filename) {
   let opts = {
     path: dir + path.sep + filename,
     version: parseInt(match[1]),
-    name: match[2]
+    name: prettyName(match[2])
   };
 
   debug(`Loading migration definition ${filename}`);
