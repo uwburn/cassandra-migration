@@ -1,27 +1,26 @@
 {
-  "name": "cassandra-migration",
-  "version": "0.0.3",
-  "description": "Cassandra migration utility as Node.js module/CLI-tool",
+  "name": "cassandra-shift",
+  "version": "0.1.0",
+  "description": "Cassandra migration utility as Node.js module",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/uwburn/cassandra-migration.git"
+    "url": "git+https://github.com/uwburn/cassandra-shift.git"
   },
   "keywords": [
     "cassandra",
     "migration",
-    "cli",
     "module"
   ],
   "author": "Michele Tibaldi <michele.tibaldi@holonix.it> (http://www.holonix.it)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/uwburn/cassandra-migration/issues"
+    "url": "https://github.com/uwburn/cassandra-shift/issues"
   },
-  "homepage": "https://github.com/uwburn/cassandra-migration#readme",
+  "homepage": "https://github.com/uwburn/cassandra-shift#readme",
   "dependencies": {
     "checksum": "^0.1.1",
     "debug": "^4.1.1"

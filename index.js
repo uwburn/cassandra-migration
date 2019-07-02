@@ -150,7 +150,7 @@ async function executeMigration(cassandraClient, migration) {
     throw cachedError;
 }
 
-module.exports = class Migrator extends EventEmitter {
+module.exports = class Shift extends EventEmitter {
 
   constructor(cassandraClients, opts) {
     super();
