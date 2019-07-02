@@ -15,10 +15,10 @@ module.exports = class CqlMigration extends BaseMigration {
     this.checksum = checksum(this.cql);
   }
 
-  async execute(cassandraClient) {
+  async execute(cassandraClients) {
     let cqlStatements = this.cql.split(/;[\r\n]+/);
     for (let cs of cqlStatements)
-      await this.executeStatement(cassandraClient, cs);
+      await this.executeStatement(cassandraClients[0], cs);
   }
 
   async executeStatement(cassandraClient, cs) {

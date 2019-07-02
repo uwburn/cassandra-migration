@@ -17,8 +17,8 @@ module.exports = class JsMigration extends BaseMigration {
     this.checksum = checksum(this.src);
   }
 
-  async execute(cassandraClient) {
-    return this.fn(cassandraClient);
+  async execute(cassandraClients) {
+    return this.fn(cassandraClients);
   }
 
 };
