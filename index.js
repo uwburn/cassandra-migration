@@ -116,7 +116,7 @@ function checkAppliedMigrations(appliedMigrations, migrations) {
   }
 }
 
-async function executeMigration(cassandraClient, migration) {
+async function executeMigration(cassandraClients, migration) {
   debug(`Applying migration ${migration.version} "${migration.name}"`);
 
   let now = new Date();
@@ -124,7 +124,7 @@ async function executeMigration(cassandraClient, migration) {
   let cachedError;
   let success;
   try {
-    await migration.execute(cassandraClient);
+    await migration.execute(cassandraClients);
     success = true;
   }
   catch(err) {
@@ -132,7 +132,7 @@ async function executeMigration(cassandraClient, migration) {
     success = false;
   }
 
-  await cassandraClient.execute(`INSERT INTO migration_history (version, name, type, checksum, installed_on, execution_time, success) VALUES (
+  await cassandraClients[0].execute(`INSERT INTO migration_history (version, name, type, checksum, installed_on, execution_time, success) VALUES (
     ?, ?, ?, ?, ?, ?, ?
   )`, [
     migration.version,
