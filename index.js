@@ -4,6 +4,7 @@ const debug = require("debug")("cassandra-migration");
 
 const fs = require("fs");
 const path = require("path");
+const EventEmitter = require("events");
 
 const JsMigration = require("./JsMigration");
 const CqlMigration = require("./CqlMigration");
@@ -45,7 +46,7 @@ async function getAppliedMigrations(cassandraClient) {
   return (await cassandraClient.execute("SELECT * FROM migration_history")).rows;
 }
 
-async function loadMigration(dir, filename) {
+async function loadAvailableMigration(dir, filename) {
   let match = filename.match(/^([0-9]+)__([A-z0-9_]*)\.(js|cql)$/);
   if (match.index !== 0)
     return;
@@ -75,14 +76,14 @@ async function loadMigration(dir, filename) {
   return migration;
 }
 
-async function loadMigrations(dir) {
-  debug("Loading migration definitions");
+async function loadAvailableMigrations(dir) {
+  debug("Loading available migrations");
 
   let migrationFiles = fs.readdirSync(dir);
 
   let migrations = [];
   for (let file of migrationFiles) {
-    let m = await loadMigration(dir, file);
+    let m = await loadAvailableMigration(dir, file);
     if (m)
       migrations.push(m);
   }
@@ -149,24 +150,57 @@ async function executeMigration(cassandraClient, migration) {
     throw cachedError;
 }
 
-module.exports = async function(cassandraClient, opts) {
-  if (opts.ensureKeyspace)
-    await ensureKeyspace(cassandraClient, opts.keyspace);
+module.exports = class Migrator extends EventEmitter {
 
-  if (opts.useKeyspace)
-    await useKeyspace(cassandraClient, opts.keyspace);
-
-  await ensureMigrationTable(cassandraClient);
-
-  let appliedMigrations = await getAppliedMigrations(cassandraClient);
-  let migrations = await loadMigrations(opts.dir);
-
-  checkAppliedMigrations(appliedMigrations, migrations);
-
-  for (let i = appliedMigrations.length; i < migrations.length; ++i) {
-    let m = migrations[i];
-    await executeMigration(cassandraClient, m);
+  constructor(cassandraClients, opts) {
+    super();
+    
+    this.cassandraClients = cassandraClients;
+    this.opts = opts;
   }
 
-  debug("Migrations applied succeffully");
+  async migrate() {
+    if (this.opts.ensureKeyspace) {
+      await ensureKeyspace(this.cassandraClients[0], this.opts.keyspace);
+      this.emit("ensuredKeyspace");
+    }
+
+    if (this.opts.useKeyspace) {
+      await useKeyspace(this.cassandraClients[0], this.opts.keyspace);
+      this.emit("usedKeyspace");
+    }
+
+    await ensureMigrationTable(this.cassandraClients[0]);
+    this.emit("ensuredMigrationTable");
+
+    let appliedMigrations = await getAppliedMigrations(this.cassandraClients[0]);
+    let availableMigrations = await loadAvailableMigrations(this.opts.dir);
+
+    checkAppliedMigrations(appliedMigrations, availableMigrations);
+    this.emit("checkedAppliedMigrations");
+
+    for (let i = appliedMigrations.length; i < availableMigrations.length; ++i) {
+      let m = availableMigrations[i];
+      await executeMigration(this.cassandraClients, m);
+      this.emit("appliedMigration", {
+        version: m.version,
+        name: m.name,
+        type: m.type
+      });
+    }
+
+    debug("Migrations applied succeffully");
+  }
+
+  async clean() {
+
+  }
+
+  async info() {
+
+  }
+
+  async validate() {
+
+  }
 };
