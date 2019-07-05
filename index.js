@@ -1,6 +1,6 @@
 "use strict";
 
-const debug = require("debug")("cassandra-migration");
+const debug = require("debug")("cassandra-shift");
 
 const fs = require("fs");
 const path = require("path");
