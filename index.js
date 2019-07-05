@@ -47,7 +47,7 @@ async function getAppliedMigrations(cassandraClient) {
 }
 
 function prettyName(name) {
-  let spaced = name.replace("_", " ");
+  let spaced = name.replace(/_/g, " ");
 
   return spaced[0].toUpperCase() + spaced.substring(1);
 }
