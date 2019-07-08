@@ -43,7 +43,9 @@ async function ensureMigrationTable(cassandraClient) {
 async function getAppliedMigrations(cassandraClient) {
   debug("Retrieving table applied migration list");
 
-  return (await cassandraClient.execute("SELECT * FROM migration_history")).rows;
+  return (await cassandraClient.execute("SELECT * FROM migration_history")).rows.sort(function(r1, r2) {
+    return r1.version - r2.version;
+  });
 }
 
 function prettyName(name) {
