@@ -56,7 +56,7 @@ function prettyName(name) {
 
 async function loadAvailableMigration(dir, filename) {
   let match = filename.match(/^([0-9]+)__([A-z0-9_]*)\.(js|cql)$/);
-  if (match.index !== 0)
+  if (match === null || match.index !== 0)
     return;
 
   let type = match[3];
