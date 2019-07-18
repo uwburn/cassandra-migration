@@ -25,10 +25,10 @@ async function useKeyspace(cassandraClient, keyspace) {
   await cassandraClient.execute(`USE ${keyspace}`);
 }
 
-async function ensureMigrationTable(cassandraClient) {
-  debug("Ensuring table migration_history exists");
+async function ensureMigrationTable(cassandraClient, migrationTable) {
+  debug(`Ensuring table ${migrationTable} exists`);
 
-  await cassandraClient.execute(`CREATE TABLE IF NOT EXISTS migration_history (
+  await cassandraClient.execute(`CREATE TABLE IF NOT EXISTS ${migrationTable} (
     version int,
     name text,
     type text,
@@ -40,10 +40,10 @@ async function ensureMigrationTable(cassandraClient) {
   )`);
 }
 
-async function getAppliedMigrations(cassandraClient) {
+async function getAppliedMigrations(cassandraClient, migrationTable) {
   debug("Retrieving table applied migration list");
 
-  return (await cassandraClient.execute("SELECT * FROM migration_history")).rows.sort(function(r1, r2) {
+  return (await cassandraClient.execute(`SELECT * FROM ${migrationTable}`)).rows.sort(function(r1, r2) {
     return r1.version - r2.version;
   });
 }
@@ -124,7 +124,7 @@ function checkAppliedMigrations(appliedMigrations, migrations) {
   }
 }
 
-async function executeMigration(cassandraClients, migration) {
+async function executeMigration(cassandraClients, migrationTable, migration) {
   debug(`Applying migration ${migration.version} "${migration.name}"`);
 
   let now = new Date();
@@ -140,7 +140,7 @@ async function executeMigration(cassandraClients, migration) {
     success = false;
   }
 
-  await cassandraClients[0].execute(`INSERT INTO migration_history (version, name, type, checksum, installed_on, execution_time, success) VALUES (
+  await cassandraClients[0].execute(`INSERT INTO ${migrationTable} (version, name, type, checksum, installed_on, execution_time, success) VALUES (
     ?, ?, ?, ?, ?, ?, ?
   )`, [
     migration.version,
@@ -160,11 +160,13 @@ async function executeMigration(cassandraClients, migration) {
 
 module.exports = class Shift extends EventEmitter {
 
-  constructor(cassandraClients, opts) {
+  constructor(cassandraClients, opts = {}) {
     super();
     
     this.cassandraClients = cassandraClients;
     this.opts = opts;
+    if (!opts.migrationTable)
+      opts.migrationTable = "migration_history";
   }
 
   async migrate() {
@@ -178,10 +180,10 @@ module.exports = class Shift extends EventEmitter {
       this.emit("usedKeyspace");
     }
 
-    await ensureMigrationTable(this.cassandraClients[0]);
+    await ensureMigrationTable(this.cassandraClients[0], this.opts.migrationTable);
     this.emit("ensuredMigrationTable");
 
-    let appliedMigrations = await getAppliedMigrations(this.cassandraClients[0]);
+    let appliedMigrations = await getAppliedMigrations(this.cassandraClients[0], this.opts.migrationTable);
     let availableMigrations = await loadAvailableMigrations(this.opts.dir);
 
     checkAppliedMigrations(appliedMigrations, availableMigrations);
@@ -189,7 +191,7 @@ module.exports = class Shift extends EventEmitter {
 
     for (let i = appliedMigrations.length; i < availableMigrations.length; ++i) {
       let m = availableMigrations[i];
-      await executeMigration(this.cassandraClients, m);
+      await executeMigration(this.cassandraClients, this.opts.migrationTable, m);
       this.emit("appliedMigration", {
         version: m.version,
         name: m.name,
