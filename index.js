@@ -107,6 +107,26 @@ async function loadAvailableMigrations(dir) {
   return migrations;
 }
 
+function computeState(appliedMigration, migration) {
+  if (appliedMigration == null)
+    return "PENDING";
+
+  if (migration == null) {
+    return appliedMigration.success ? "UNKNOWN_SUCCESS" : "UNKNOWN_FAILED";
+  }
+
+  if (appliedMigration.version !== migration.version)
+    return "MISMATCH";
+
+  if (appliedMigration.name !== migration.name)
+    return "MISMATCH";
+
+  if (appliedMigration.checksum !== migration.checksum)
+    return "MISMATCH";
+
+  return appliedMigration.success ? "SUCCESS" : "FAILED";
+}
+
 function checkAppliedMigrations(appliedMigrations, migrations) {
   debug("Checking applied migrations");
 
@@ -228,7 +248,37 @@ module.exports = class Shift extends EventEmitter {
   }
 
   async info() {
+    if (this.opts.useKeyspace) {
+      await useKeyspace(this.cassandraClients[0], this.opts.keyspace);
+      this.emit("usedKeyspace");
+    }
 
+    let appliedMigrations;
+    try {
+      appliedMigrations = await getAppliedMigrations(this.cassandraClients[0], this.opts.migrationTable);
+    }
+    catch (err) {
+      appliedMigrations = [];
+    }
+    let availableMigrations = await loadAvailableMigrations(this.opts.dir);
+
+    let length = Math.max(appliedMigrations.length, availableMigrations.length);
+    let info = [];
+    for (let i = 0; i < length; ++i) {
+      let am = appliedMigrations[i];
+      let m = availableMigrations[i];
+
+      info.push({
+        version: i,
+        name: m != null ? m.name : am.name,
+        type: m != null ? m.type : am.type,
+        state: computeState(am, m),
+        installedOn: am != null ? am.installed_on : null,
+        executionTime: am != null ? am.execution_time : null
+      });
+    }
+
+    return info;
   }
 
   async validate() {
