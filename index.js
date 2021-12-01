@@ -232,6 +232,22 @@ module.exports = class Shift extends EventEmitter {
   }
 
   async validate() {
+    if (this.opts.useKeyspace) {
+      await useKeyspace(this.cassandraClients[0], this.opts.keyspace);
+      this.emit("usedKeyspace");
+    }
 
+    try {
+      let appliedMigrations = await getAppliedMigrations(this.cassandraClients[0], this.opts.migrationTable);
+      let availableMigrations = await loadAvailableMigrations(this.opts.dir);
+
+      checkAppliedMigrations(appliedMigrations, availableMigrations);
+      this.emit("checkedAppliedMigrations");
+
+      return false;
+    }
+    catch (err) {
+      return false;
+    }
   }
 };
