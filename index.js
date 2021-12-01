@@ -12,11 +12,19 @@ const CqlMigration = require("./CqlMigration");
 async function ensureKeyspace(cassandraClient, keyspace) {
   debug(`Ensuring keyspace ${keyspace}, if not exists it will be created with default settings`);
 
+  await createDefaultKeyspace(cassandraClient, keyspace);
+}
+
+async function createDefaultKeyspace(cassandraClient, keyspace) {
   await cassandraClient.execute(`CREATE KEYSPACE IF NOT EXISTS ${keyspace}
   WITH replication = {
     'class' : 'SimpleStrategy',
     'replication_factor' : 1
   }`);
+}
+
+async function dropKeyspace(cassandraClient, keyspace) {
+  await cassandraClient.execute(`DROP KEYSPACE IF EXISTS ${keyspace}`);
 }
 
 async function useKeyspace(cassandraClient, keyspace) {
@@ -210,7 +218,13 @@ module.exports = class Shift extends EventEmitter {
   }
 
   async clean() {
+    debug(`Cleaning keyspace ${this.opts.keyspace}"`);
 
+    await dropKeyspace(this.cassandraClients[0], this.opts.keyspace);
+    await createDefaultKeyspace(this.cassandraClients[0], this.opts.keyspace);
+    this.emit("cleaned");
+
+    debug("Keyspace cleaned succeffully");
   }
 
   async info() {
