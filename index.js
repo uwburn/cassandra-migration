@@ -109,9 +109,16 @@ function checkAppliedMigrations(appliedMigrations, migrations) {
   if (!lm.success)
     throw new Error(`Migration ${lm.version} - "${lm.name}" failed, fix manually before retrying`);
 
+  if (appliedMigrations.length > migrations.length) {
+    debug(`Applied ${appliedMigrations.length} migrations, but only ${migrations.length} defined`);
+  }
+
   for (let i = 0; i < appliedMigrations.length; ++i) {
     let am = appliedMigrations[i];
     let m = migrations[i];
+
+    if (m == null)
+      continue;
 
     if (am.version !== m.version)
       throw new Error(`Migration version mismatch: applied ${am.version}, defined ${m.version}`);
